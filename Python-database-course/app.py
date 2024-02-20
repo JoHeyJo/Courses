@@ -1,6 +1,8 @@
 from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, URL
+from models import Base
+
 
 url = URL.create(
     drivername="postgresql+psycopg2",  # driver name = postgresql + the library we are using (psycopg2)
@@ -13,6 +15,8 @@ url = URL.create(
 
 engine = create_engine(url) # skipped echo=True to avoid printing out all the SQL commands
 
+Base.metadata.drop_all(engine)
+Base.metadata.create_all(engine)
 url.render_as_string()
 
 # a sessionmaker(), also in the same scope as the engine
@@ -21,7 +25,7 @@ session_pool = sessionmaker(bind=engine)
 
 # we can now construct a Session() without needing to pass the
 # engine each time
-with session_pool() as session:
+# with session_pool() as session:
     # query = text("""
     # INSERT INTO users (telegram_id, full_name, username, language_code, referrer_id)
     # VALUES (1, 'John Doe', 'johndoe', 'en', NULL),
@@ -30,12 +34,12 @@ with session_pool() as session:
     # session.execute(query)
     # session.commit()
 
-    select_query = text("""
-    SELECT * FROM USERS
-    """)
+    # select_query = text("""
+    # SELECT * FROM USERS
+    # """)
 
-    result = session.execute(select_query)
-    for row in result:
-      print(row)
+    # result = session.execute(select_query)
+    # for row in result:
+    #   print(row)
 # closes the session after exiting the context manager.
       
