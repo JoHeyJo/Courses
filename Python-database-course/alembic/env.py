@@ -1,8 +1,10 @@
-from logging.config import fileConfig
-
 from sqlalchemy import engine_from_config
+from logging.config import fileConfig
+from sqlalchemy import URL
 from sqlalchemy import pool
-
+from dotenv import load_dotenv
+import os
+load_dotenv()
 from alembic import context
 
 # this is the Alembic Config object, which provides
@@ -16,14 +18,27 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
+import models
+
+target_metadata = models.Base.metadata
+
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+url = URL.create(
+    # driver name = postgresql + the library we are using (psycopg2)
+    drivername="postgresql+psycopg2",
+    username=os.environ['POSTGRES_USER'],
+    password=os.environ['POSTGRES_PASSWORD'],
+    host=os.environ['DATABASE_HOST'],
+    database=os.environ['POSTGRES_DB'],
+    port=5432
+)
+config.set_main_option('sqlalchemy.url', str(url))
 
 
 def run_migrations_offline() -> None:
