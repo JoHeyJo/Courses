@@ -2,22 +2,26 @@ from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, URL
 from models import Base
+import os
+
+
+
 
 
 url = URL.create(
     drivername="postgresql+psycopg2",  # driver name = postgresql + the library we are using (psycopg2)
-    username='testuser',
-    password='testpassword',
-    host='localhost',
-    database='testuser',
+    username=os['POSTGRES_USER'],
+    password=os['POSTGRES_PASSWORD'],
+    host=os['DATABASE_HOST'],
+    database=os['POSTGRES_DB'],
     port=5432
 )
+config.set_main_option('sqlalchemy.url', str(url))
 
 engine = create_engine(url) # skipped echo=True to avoid printing out all the SQL commands
 
 Base.metadata.drop_all(engine)
 Base.metadata.create_all(engine)
-url.render_as_string()
 
 # a sessionmaker(), also in the same scope as the engine
 session_pool = sessionmaker(bind=engine)
