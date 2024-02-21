@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import TIMESTAMP
-from sqlalchemy import ForeignKey, BIGINT, INTEGER
+from sqlalchemy import ForeignKey, BIGINT, INTEGER, VARCHAR, DECIMAL
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, DeclarativeBase
 from sqlalchemy.orm import mapped_column
@@ -47,10 +47,11 @@ class User(Base, TableNameMixin, TimestampMixin):
         BIGINT, nullable=False, primary_key=True)
     full_name: Mapped[str_255]
     username: Mapped[Optional[str_255]]
-    language_code: Mapped[str_255]
+    language_code: Mapped[str] = mapped_column(VARCHAR(10))
     referrer_id: Mapped[Optional[user_fk]]
     order_id = Mapped[int_pk]
     user_id = Mapped[user_fk]
+    phone_number: Mapped[Optional[str]] = mapped_column(VARCHAR(50))
 
 
 class Product(Base, TimestampMixin, TableNameMixin):
@@ -58,7 +59,8 @@ class Product(Base, TimestampMixin, TableNameMixin):
 
     product_id: Mapped[int_pk]
     title: Mapped[str_255]
-    description: Mapped[str]
+    description: Mapped[Optional[str]] = mapped_column(VARCHAR(3000))
+    price: Mapped[float] = mapped_column(DECIMAL(precision=16, scale=4))
 
 
 class Order(Base, TimestampMixin, TableNameMixin):
@@ -76,6 +78,7 @@ class OrderProduct(Base, TableNameMixin):
     product_id: Mapped[int] = mapped_column(INTEGER, ForeignKey(
         "products.product_id", ondelete="RESTRICT"), primary_key=True)
     quantity: Mapped[int]
+
 
     # order = relationship("Order", back_populates="order_products")
     # product = relationship("Product", back_populates="order_products")

@@ -54,6 +54,10 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['product_id'], ['products.product_id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('order_id', 'product_id')
     )
+    # op.create_table('my_new_table',
+    # sa.Column('order_id', sa.INTEGER(), nullable=False),
+    # sa.Column('description', sa.String(), nullable=False)
+    # )
     # ### end Alembic commands ###
 
 
