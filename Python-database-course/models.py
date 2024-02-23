@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Session
+from sqlalchemy import insert, select
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy import ForeignKey, BIGINT, INTEGER, VARCHAR, DECIMAL
@@ -46,7 +48,7 @@ class User(Base, TableNameMixin, TimestampMixin):
     telegram_id: Mapped[int] = mapped_column(
         BIGINT, nullable=False, primary_key=True)
     full_name: Mapped[str_255]
-    username: Mapped[Optional[str_255]]
+    user_name: Mapped[Optional[str_255]]
     language_code: Mapped[str] = mapped_column(VARCHAR(10))
     referrer_id: Mapped[Optional[user_fk]]
     order_id = Mapped[int_pk]
@@ -79,6 +81,28 @@ class OrderProduct(Base, TableNameMixin):
         "products.product_id", ondelete="RESTRICT"), primary_key=True)
     quantity: Mapped[int]
 
-
     # order = relationship("Order", back_populates="order_products")
     # product = relationship("Product", back_populates="order_products")
+
+
+# class Repo:
+#     def __init__(self, session: Session):
+#         self.session = session
+
+#     def add_user(
+#         self,
+#         telegram_id: int,
+#         full_name: str,
+#         language_code: str,
+#         user_name: str = None,
+#         referrer_id: int = None,
+#     ):
+#         stmt = insert(User).values(
+#             telegram_id=telegram_id,
+#             full_name=full_name,
+#             user_name=user_name,
+#             language_code=language_code,
+#             referrer_id=referrer_id,
+#         )
+#         self.session.execute(stmt)
+#         self.session.commit()

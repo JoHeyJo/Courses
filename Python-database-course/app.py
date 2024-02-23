@@ -1,7 +1,9 @@
+from sqlalchemy.orm import Session
+from sqlalchemy import insert, select
 from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, URL
-from models import Base
+from models import Base, User
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -20,29 +22,40 @@ engine = create_engine(url) # skipped echo=True to avoid printing out all the SQ
 
 Base.metadata.drop_all(engine)
 # target_metadata = Base.metadata
-# Base.metadata.create_all(engine)
+Base.metadata.create_all(engine)
 
 # a sessionmaker(), also in the same scope as the engine
 session_pool = sessionmaker(bind=engine)
-# or you can name it `session_pool` or whatever you want
 
-# we can now construct a Session() without needing to pass the
-# engine each time
+# Base.drop_all(engine)
+# class Repo:
+#     def __init__(self, session: Session):
+#         self.session = session
+
+#     def add_user(
+#         self,
+#         telegram_id: int,
+#         full_name: str,
+#         language_code: str,
+#         user_name: str = None,
+#         referrer_id: int = None,
+#     ):
+#         stmt = insert(User).values(
+#             telegram_id=telegram_id,
+#             full_name=full_name,
+#             user_name=user_name,
+#             language_code=language_code,
+#             referrer_id=referrer_id,
+#         )
+#         self.session.execute(stmt)
+#         self.session.commit()
+
+
 # with session_pool() as session:
-    # query = text("""
-    # INSERT INTO users (telegram_id, full_name, username, language_code, referrer_id)
-    # VALUES (1, 'John Doe', 'johndoe', 'en', NULL),
-    #           (2, 'Jane Doe', 'janedoe', 'en', 1);
-    # """)
-    # session.execute(query)
-    # session.commit()
-
-    # select_query = text("""
-    # SELECT * FROM USERS
-    # """)
-
-    # result = session.execute(select_query)
-    # for row in result:
-    #   print(row)
-# closes the session after exiting the context manager.
-      
+#     repo = Repo(session)
+#     repo.add_user(
+#         telegram_id=1,
+#         full_name='John Doe',
+#         user_name='johnny',
+#         language_code='en',
+#     )
