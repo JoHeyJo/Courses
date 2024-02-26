@@ -1,14 +1,18 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import insert, select
+import random
+import sqlalchemy
+from faker import Faker
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session, aliased
+from sqlalchemy import select
 from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, URL, or_
-from models import Base, User
+from models import Base, User, Order, Product, OrderProduct
 from typing import List
 from dotenv import load_dotenv
 import os
 load_dotenv()
-
+print('>>>>>>>',sqlalchemy.__version__) # version 2.0.4
 url = URL.create(
     drivername="postgresql+psycopg2",  # driver name = postgresql + the library we are using (psycopg2)
     username=os.environ['POSTGRES_USER'],
@@ -33,90 +37,45 @@ class Repo:
     def __init__(self, session: Session):
         self.session = session
 
-    def add_user(
-        self,
-        telegram_id: int,
-        full_name: str,
-        language_code: str,
-        user_name: str = None,
-        referrer_id: int = None,
-    ):
-        stmt = insert(User).values(
-            telegram_id=telegram_id,
-            full_name=full_name,
-            user_name=user_name,
-            language_code=language_code,
-            referrer_id=referrer_id,
+    def get_all_user_orders_user_full(self, telegram_id: int):
+        stmt = (
+            select(Order, User).join(User.orders).where(
+                User.telegram_id == telegram_id)
         )
-        self.session.execute(stmt)
-        self.session.commit()
-
-    def get_user_by_id(self, telegram_id: int) -> User:
-        # Notice that you should pass the comparison-like arguments
-        # to WHERE statement, as you can see below, we are using
-        # `User.telegram_id == telegram_id` instead of
-        # `User.telegram_id = telegram_id`
-        stmt = select(User).where(User.telegram_id == telegram_id)
+        # NOTICE: Since we are joining two tables, we won't use `.scalars()` method.
+        # Usually we want to use scalars if we are joining multiple tables or
+        # when you use `.label()` method to retrieve some specific column etc.
         result = self.session.execute(stmt)
-        # After we get the result of our statement execution, we need to
-        # define HOW we want to get the data. In most cases you want to
-        # get the object(s) or only one value. To retrieve the object
-        # itself, we call the `scalars` method of our result. Then we
-        # have to define HOW MANY records you want to get. It can be
-        # `first` object, `one` (raises an error if there are not
-        # exactly one row retrieved)) / `one_or_none` and so on.
-        return result.scalars().first()
+        return result.all()
 
-    def get_all_users_simple(self) -> List[User]:
-        stmt = select(User)
-        result = self.session.execute(stmt)
-        return result.scalars().all()
-
-    def get_all_users_advanced(self) -> List[User]:
-        stmt = select(
-            User,
-        ).where(
-            # OR clauses' syntax is explicit-only, unlike the AND clause.
-            # You can pass each argument of OR statement as arguments to
-            # `sqlalchemy.or_` function, like on the example below
-            or_(
-                User.language_code == 'en',
-                User.language_code == 'uk',
-            ),
-            # Each argument that you pass to `where` method of the Select object
-            # considered as an argument of AND statement
-            User.user_name.ilike('%john%'),
-        ).order_by(
-            User.created_at.desc(),
-        ).limit(
-            10,
-        ).having(
-            User.telegram_id > 0,
-        ).group_by(
-            User.telegram_id,
+    def get_all_user_orders_user_only_user_name(self, telegram_id: int):
+        stmt = (
+            select(Order, User.user_name).join(User.orders).where(
+                User.telegram_id == telegram_id)
         )
         result = self.session.execute(stmt)
-        return result.scalars().all()
-
-    def get_user_language(self, telegram_id: int) -> str:
-        stmt = select(User.language_code).where(
-            User.telegram_id == telegram_id)
-        result = self.session.execute(stmt)
-        return result.scalar()
+        return result.all()
 
 
 with session_pool() as session:
     repo = Repo(session)
-    user = repo.get_user_by_id(1)
-    print(
-        f'User: {user.telegram_id} '
-        f'Full name: {user.full_name} '
-        f'Username: {user.user_name} '
-        f'Language code: {user.language_code}'
-    )
-    all_users = repo.get_all_users_simple()
-    print(all_users)
-    users = repo.get_all_users_advanced()
-    print(users)
-    user_language = repo.get_user_language(1)
-    print(user_language)
+    user_orders = repo.get_all_user_orders_user_full(telegram_id=4104)
+    # You have two ways of accessing retrieved data, first is like below:
+    for order, user in user_orders:
+        print(f'Order: {order.order_id} - {user.full_name}')
+    print('=============')
+    # Second is like next:
+    for row in user_orders:
+        print(f'Order: {row.Order.order_id} - {row.User.full_name}')
+    print('=============')
+    # In the next two examples you can see how to access your data when
+    # you didn't specified only full tables
+    user_orders = repo.get_all_user_orders_user_only_user_name(
+        telegram_id=4104)
+    for order, user_name in user_orders:
+        print(f'Order: {order.order_id} - {user_name}')
+    print('=============')
+    for row in user_orders:
+        # As you can see, if we specified column instead of full table,
+        # we can access it directly from row by using the name of column
+        print(f'Order: {row.Order.order_id} - {row.user_name}')

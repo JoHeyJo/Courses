@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy import ForeignKey, BIGINT, INTEGER, VARCHAR, DECIMAL
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, DeclarativeBase
-from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.sql.functions import func
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.declarative import declared_attr
@@ -55,6 +55,7 @@ class User(Base, TableNameMixin, TimestampMixin):
     user_id = Mapped[user_fk]
     phone_number: Mapped[Optional[str]] = mapped_column(VARCHAR(50))
 
+    orders: Mapped[list['Order']] = relationship(back_populates='user')
 
 class Product(Base, TimestampMixin, TableNameMixin):
     """Products table"""
@@ -71,6 +72,9 @@ class Order(Base, TimestampMixin, TableNameMixin):
     order_id: Mapped[int_pk]
     user_id: Mapped[user_fk]
 
+    products: Mapped[list['OrderProduct']] = relationship()
+    user: Mapped['User'] = relationship(back_populates='orders')
+
 
 class OrderProduct(Base, TableNameMixin):
     """Association table for Orders """
@@ -80,6 +84,8 @@ class OrderProduct(Base, TableNameMixin):
     product_id: Mapped[int] = mapped_column(INTEGER, ForeignKey(
         "products.product_id", ondelete="RESTRICT"), primary_key=True)
     quantity: Mapped[int]
+
+    product: Mapped['Product'] = relationship()
 
     # order = relationship("Order", back_populates="order_products")
     # product = relationship("Product", back_populates="order_products")
